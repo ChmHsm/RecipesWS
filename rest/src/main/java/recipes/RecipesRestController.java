@@ -30,6 +30,8 @@ public class RecipesRestController {
          return recipeRepository.findByCookUsernameIgnoreCase(cookUsername);
      }
 
+
+
     private void validateCook(String cookUsername){
         this.cookRepository.findByUsernameIgnoreCase(cookUsername).orElseThrow(() -> new CookNotFoundException(cookUsername));
     }

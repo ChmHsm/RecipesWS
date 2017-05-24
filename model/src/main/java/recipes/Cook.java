@@ -3,6 +3,9 @@ package recipes;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Set;
 
 /**
@@ -22,6 +25,31 @@ public class Cook {
 
     @OneToMany(mappedBy = "cook")
     private Set<Recipe> recipes;
+
+    private Date dateCreated;
+
+    @PrePersist
+    private void datePersisted(){
+        this.dateCreated = new Date();
+    }
+
+    @JsonIgnore
+    private Date lastUpdated;
+
+    public String getDateCreated() {
+
+        SimpleDateFormat dt1 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+        return dt1.format(this.dateCreated);
+    }
+
+    public Date getLastUpdated() {
+        return lastUpdated;
+    }
+
+    @PreUpdate
+    private void dateUpdated(){
+        this.lastUpdated = new Date();
+    }
 
     public Cook(String username, String password) {
         this.username = username;

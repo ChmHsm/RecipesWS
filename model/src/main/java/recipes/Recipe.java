@@ -1,9 +1,13 @@
 package recipes;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.ManyToOne;
-import javax.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import javax.persistence.*;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
 /**
  * Created by Me on 22/05/2017.
@@ -30,6 +34,16 @@ public class Recipe {
 
     private String imgUri;
 
+    public String getDateCreated() {
+
+        SimpleDateFormat dt1 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+        return dt1.format(this.dateCreated);
+    }
+
+    public Date getLastUpdated() {
+        return lastUpdated;
+    }
+
     public Cook getCook() {
         return cook;
     }
@@ -40,6 +54,21 @@ public class Recipe {
 
     @ManyToOne
     private Cook cook;
+
+    private Date dateCreated;
+
+    @PrePersist
+    private void datePersisted(){
+        this.dateCreated = new Date();
+    }
+
+    @JsonIgnore
+    private Date lastUpdated;
+
+    @PreUpdate
+    private void dateUpdated(){
+        this.lastUpdated = new Date();
+    }
 
     Recipe(){
         //JPA specific
