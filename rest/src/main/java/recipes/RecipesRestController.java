@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.security.InvalidParameterException;
 import java.util.Collection;
 
 /**
@@ -31,8 +32,8 @@ public class RecipesRestController {
      }
 
 
-
     private void validateCook(String cookUsername){
         this.cookRepository.findByUsernameIgnoreCase(cookUsername).orElseThrow(() -> new CookNotFoundException(cookUsername));
     }
+
 }

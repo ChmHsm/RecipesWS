@@ -20,7 +20,7 @@ public class Application extends SpringBootServletInitializer{
 
     @Bean
     CommandLineRunner init(final CookRepository cookRepository, final RecipeRepository recipeRepository){
-        return (evt) -> Arrays.asList("Houssam,Boualam".split(","))
+        return (evt) -> Arrays.asList("Houssam,Boualam,Safaa,Chaymae".split(","))
                 .forEach(
                         c ->{
                             Cook cook = cookRepository.save(new Cook(c, "password"));
