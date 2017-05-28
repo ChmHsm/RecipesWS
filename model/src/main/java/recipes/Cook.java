@@ -26,6 +26,17 @@ public class Cook {
     @OneToMany(mappedBy = "cook")
     private Set<Recipe> recipes;
 
+    @OneToOne
+    private Image image;
+
+    public Image getImage() {
+        return image;
+    }
+
+    public void setImage(Image image) {
+        this.image = image;
+    }
+
     private Date dateCreated;
 
     @PrePersist

@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * Created by Me on 22/05/2017.
@@ -32,16 +33,15 @@ public class Recipe {
 
     private String instructions;
 
-    private String imgUri;
-
     public String getDateCreated() {
 
         SimpleDateFormat dt1 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
         return dt1.format(this.dateCreated);
     }
 
-    public Date getLastUpdated() {
-        return lastUpdated;
+    public String getLastUpdated() {
+        SimpleDateFormat dt1 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+        return dt1.format(this.lastUpdated);
     }
 
     public Cook getCook() {
@@ -73,6 +73,9 @@ public class Recipe {
     Recipe(){
         //JPA specific
     }
+
+    @OneToMany(mappedBy = "recipe")
+    private Set<Image> recipeImage;
 
     public Recipe(String title, int difficultyRating, int prepTime, double prepCost, String ingredients, String instructions) {
         this.title = title;
@@ -107,10 +110,6 @@ public class Recipe {
         this.instructions = instructions;
     }
 
-    public void setImgUri(String imgUri) {
-        this.imgUri = imgUri;
-    }
-
     public Long getId() {
 
         return Id;
@@ -138,10 +137,6 @@ public class Recipe {
 
     public String getInstructions() {
         return instructions;
-    }
-
-    public String getImgUri() {
-        return imgUri;
     }
 
     public Recipe(String title, int difficultyRating, int prepTime, double prepCost, String ingredients, String instructions, Cook cook) {
