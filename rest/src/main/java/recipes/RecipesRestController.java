@@ -1,5 +1,6 @@
 package recipes;
 
+import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +11,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
+import java.security.InvalidParameterException;
 import java.util.Collection;
 
 /**
@@ -22,11 +25,14 @@ public class RecipesRestController {
 
     private final CookRepository cookRepository;
     private final RecipeRepository recipeRepository;
+    private final ImageRepository imageRepository;
+    public static String IMAGE_STORAGE_LOCATION = "Image storage directory/";
 
     @Autowired
-    public RecipesRestController(CookRepository cookRepository, RecipeRepository recipeRepository){
+    public RecipesRestController(CookRepository cookRepository, RecipeRepository recipeRepository, ImageRepository imageRepository){
         this.cookRepository = cookRepository;
         this.recipeRepository = recipeRepository;
+        this.imageRepository = imageRepository;
     }
 
      @RequestMapping(method = RequestMethod.GET)
@@ -93,21 +99,50 @@ public class RecipesRestController {
 
     @RequestMapping(value="/{recipeId}/recipeMainImage", method=RequestMethod.POST)
     public @ResponseBody String handleFileUpload(@RequestParam("file") MultipartFile file, @PathVariable Long recipeId){
-        String name = "test11";
-        System.out.println("File " + file.getName() +" was received.");
+        validateRecipe(recipeId);
+        validateImageFile(file);
+
+        String originalName = file.getOriginalFilename();
+
+        Image recipeImage = this.imageRepository.save(new Image(originalName, true));
+        recipeImage.setOriginalPath(IMAGE_STORAGE_LOCATION+recipeImage.getId());
+        recipeImage.setRecipe(this.recipeRepository.findOne(recipeId));
+        this.imageRepository.save(recipeImage);
+
         if (!file.isEmpty()) {
             try {
                 byte[] bytes = file.getBytes();
                 BufferedOutputStream stream =
-                        new BufferedOutputStream(new FileOutputStream(new File(name + "-uploaded")));
+                        new BufferedOutputStream(new FileOutputStream(new File(IMAGE_STORAGE_LOCATION + recipeImage.getId() )));
                 stream.write(bytes);
                 stream.close();
-                return "You successfully uploaded " + name + " into " + name + "-uploaded !";
+                return "You successfully uploaded " + originalName + " into " + IMAGE_STORAGE_LOCATION + originalName ;
             } catch (Exception e) {
-                return "You failed to upload " + name + " => " + e.getMessage();
+                return "You failed to upload " + originalName + " => " + e.getMessage();
             }
         } else {
-            return "You failed to upload " + name + " because the file was empty.";
+            return "You failed to upload " + originalName + " because the file was empty.";
+        }
+    }
+
+    private void validateImageFile(MultipartFile file){
+        if(!file.isEmpty())
+        {
+            Tika tika = new Tika();
+            String detectedType = null;
+            try {
+                detectedType = tika.detect(file.getBytes());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if(detectedType == null){
+                throw new NullImageuploadException();
+            }
+            else{
+                if(detectedType.isEmpty() || !detectedType.contains("image/")){
+                    throw new InvalidParameterException("The updated file isn't an image");
+                }
+            }
         }
     }
 

@@ -26,10 +26,42 @@ public class Image {
 
     private Date lastUpdated;
 
+    private boolean isMainPicture;
+
+    public boolean isMainPicture() {
+        return isMainPicture;
+    }
+
+    public void setMainPicture(boolean isMainPicture) {
+        this.isMainPicture = isMainPicture;
+    }
+
+    public Cook getCook() {
+        return cook;
+    }
+
+    public void setCook(Cook cook) {
+        this.cook = cook;
+    }
+
+    public Recipe getRecipe() {
+        return recipe;
+    }
+
+    public void setRecipe(Recipe recipe) {
+        this.recipe = recipe;
+    }
+
     public Image(String originalName, String originalPath, Recipe recipe) {
         this.originalName = originalName;
         this.originalPath = originalPath;
         this.recipe = recipe;
+        this.isMainPicture = true;
+    }
+
+    public Image(String originalName, boolean isMainPicture) {
+        this.originalName = originalName;
+        this.isMainPicture = isMainPicture;
     }
 
     public Image(String originalName, String originalPath, Cook cook) {
@@ -37,6 +69,8 @@ public class Image {
         this.originalName = originalName;
         this.originalPath = originalPath;
         this.cook = cook;
+        this.isMainPicture = true;
+
     }
 
     @OneToOne
