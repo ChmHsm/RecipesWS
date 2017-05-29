@@ -136,7 +136,7 @@ public class RecipesRestController {
                 e.printStackTrace();
             }
             if(detectedType == null){
-                throw new NullImageUploadException2();
+                throw new NullImageUploadException();
             }
             else{
                 if(detectedType.isEmpty() || !detectedType.contains("image/")){
