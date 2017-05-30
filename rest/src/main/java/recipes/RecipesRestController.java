@@ -1,7 +1,13 @@
 package recipes;
 
 import org.apache.tika.Tika;
+import org.apache.tika.detect.MagicDetector;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +19,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.InvalidParameterException;
 import java.util.Collection;
 
@@ -79,7 +88,7 @@ public class RecipesRestController {
 
         return cookRepository.findByUsernameIgnoreCase(cookUsername)
                 .map(cook -> {
-                    Recipe updatedRecipe = this.recipeRepository.save(recipe);
+                    this.recipeRepository.save(recipe);
                     URI location = ServletUriComponentsBuilder
                             .fromCurrentRequest()
                             .buildAndExpand().toUri();
@@ -97,8 +106,8 @@ public class RecipesRestController {
         if(recipe == null) throw new RecipeNotFoundException();
     }
 
-    @RequestMapping(value="/{recipeId}/recipeMainImage", method=RequestMethod.POST)
-    public @ResponseBody String handleFileUpload(@RequestParam("file") MultipartFile file, @PathVariable Long recipeId){
+    @RequestMapping(value="/{recipeId}/recipeMainImage/{isMainPicture}", method=RequestMethod.POST)
+    public @ResponseBody String handleRecipeImageUpload(@RequestParam("file") MultipartFile file, @PathVariable Long recipeId, @PathVariable Boolean isMainPicture){
         validateRecipe(recipeId);
         validateImageFile(file);
 
@@ -107,6 +116,7 @@ public class RecipesRestController {
         Image recipeImage = this.imageRepository.save(new Image(originalName, true));
         recipeImage.setOriginalPath(IMAGE_STORAGE_LOCATION+recipeImage.getId());
         recipeImage.setRecipe(this.recipeRepository.findOne(recipeId));
+        if(isMainPicture) recipeImage.setMainPicture(true);
         this.imageRepository.save(recipeImage);
 
         if (!file.isEmpty()) {
@@ -123,6 +133,47 @@ public class RecipesRestController {
         } else {
             return "You failed to upload " + originalName + " because the file was empty.";
         }
+    }
+
+    @RequestMapping(value="/{recipeId}/recipeMainImage", method=RequestMethod.GET)
+    public ResponseEntity<Resource> getImageByRecipe(@PathVariable Long recipeId){
+        validateRecipe(recipeId);
+
+        Recipe recipe = this.recipeRepository.findOne(recipeId);
+        Collection<Image> images = this.imageRepository.findByRecipe(recipe);
+        String filePath = IMAGE_STORAGE_LOCATION;
+
+        if(images != null) {
+            if (images.size() > 0) {
+                for (Image image : images) {
+                    if (image.isMainPicture()) {
+                        filePath += "/" + image.getId();
+                        break;
+                    }
+                }
+
+                File file = new File(filePath);
+                if (file.exists()) {
+                    Path path = Paths.get(file.getAbsolutePath());
+                    try {
+                        ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
+
+                        final HttpHeaders headers = new HttpHeaders();
+                        headers.setContentType(MediaType.IMAGE_GIF);
+
+                        return ResponseEntity.ok()
+                                .headers(headers)
+                                .contentLength(file.length())
+                                .contentType(MediaType.parseMediaType("application/octet-stream"))
+                                .body(resource);
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     private void validateImageFile(MultipartFile file){
