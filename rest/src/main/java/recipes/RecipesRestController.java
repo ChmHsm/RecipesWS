@@ -2,6 +2,8 @@ package recipes;
 
 import org.apache.tika.Tika;
 import org.apache.tika.detect.MagicDetector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -36,12 +38,15 @@ public class RecipesRestController {
     private final RecipeRepository recipeRepository;
     private final ImageRepository imageRepository;
     public static String IMAGE_STORAGE_LOCATION = "Image storage directory/";
+    private final Logger logger;
 
     @Autowired
     public RecipesRestController(CookRepository cookRepository, RecipeRepository recipeRepository, ImageRepository imageRepository){
         this.cookRepository = cookRepository;
         this.recipeRepository = recipeRepository;
         this.imageRepository = imageRepository;
+        logger = LoggerFactory.getLogger(RecipesRestController.class);
+
     }
 
      @RequestMapping(method = RequestMethod.GET)
@@ -195,6 +200,31 @@ public class RecipesRestController {
                 }
             }
         }
+    }
+
+    @RequestMapping(value = "/{recipeId}", method = RequestMethod.DELETE)
+    public ResponseEntity<?> deleteRecipe(@PathVariable Long recipeId){
+        validateRecipe(recipeId);
+        Recipe recipe = this.recipeRepository.findOne(recipeId);
+        Collection<Image> recipeImages = this.imageRepository.findByRecipe(recipe);
+        if(recipeImages != null){
+            if(recipeImages.size() > 0){
+                recipeImages.forEach(image -> {
+                    File recipeImageFile = new File(image.getOriginalPath());
+                    if (recipeImageFile.exists())
+                        if (!recipeImageFile.delete()) logger.warn("Could not delete recipe image in "+recipeImageFile.getAbsolutePath());
+                    this.imageRepository.delete(image);
+                });
+            }
+        }
+        if(recipe != null){
+            this.recipeRepository.delete(recipe);
+            return ResponseEntity.noContent().build();
+        }
+        else{
+            return ResponseEntity.notFound().build();
+        }
+
     }
 
 }
