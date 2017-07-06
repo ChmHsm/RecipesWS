@@ -1,7 +1,6 @@
 package recipes;
 
 import org.apache.tika.Tika;
-import org.apache.tika.detect.MagicDetector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,7 +111,7 @@ public class RecipesRestController {
     }
 
     @RequestMapping(value="/{recipeId}/recipeMainImage/{isMainPicture}", method=RequestMethod.POST)
-    public @ResponseBody String handleRecipeImageUpload(@RequestParam("file") MultipartFile file, @PathVariable Long recipeId, @PathVariable Boolean isMainPicture){
+    ResponseEntity<?> handleRecipeImageUpload(@RequestParam("file") MultipartFile file, @PathVariable Long recipeId, @PathVariable Boolean isMainPicture){
         validateRecipe(recipeId);
         validateImageFile(file);
 
@@ -131,12 +130,13 @@ public class RecipesRestController {
                         new BufferedOutputStream(new FileOutputStream(new File(IMAGE_STORAGE_LOCATION + recipeImage.getId() )));
                 stream.write(bytes);
                 stream.close();
-                return "You successfully uploaded " + originalName + " into " + IMAGE_STORAGE_LOCATION + originalName ;
+
+                return ResponseEntity.ok().build() ;
             } catch (Exception e) {
-                return "You failed to upload " + originalName + " => " + e.getMessage();
+                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).build();
             }
         } else {
-            return "You failed to upload " + originalName + " because the file was empty.";
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).build();
         }
     }
 
