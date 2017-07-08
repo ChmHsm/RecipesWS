@@ -28,7 +28,15 @@ public class Image {
 
     private boolean isMainPicture;
 
+    public Image(String originalPath, String originalName, Recipe recipe, boolean isMainPicture) {
+        this.originalPath = originalPath;
+        this.originalName = originalName;
+        this.isMainPicture = isMainPicture;
+        this.recipe = recipe;
+    }
+
     public String getExtension() {
+
         return extension;
     }
 

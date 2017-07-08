@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import recipes.Exceptions.CookNotFoundException;
+import recipes.Exceptions.NullImageUploadException;
+import recipes.Exceptions.RecipeNotFoundException;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

@@ -23,8 +23,6 @@ public class Cook {
     @JsonIgnore
     private String password;
 
-    @OneToMany(mappedBy = "cook")
-    private Set<Recipe> recipes;
 
     @OneToOne
     private Image image;
@@ -44,13 +42,10 @@ public class Cook {
         this.dateCreated = new Date();
     }
 
-    @JsonIgnore
     private Date lastUpdated;
 
-    public String getDateCreated() {
-
-        SimpleDateFormat dt1 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-        return dt1.format(this.dateCreated);
+    public Date getDateCreated() {
+        return this.dateCreated;
     }
 
     public Date getLastUpdated() {
@@ -73,10 +68,6 @@ public class Cook {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public void setRecipes(Set<Recipe> recipes) {
-        this.recipes = recipes;
     }
 
     public Long getId() {

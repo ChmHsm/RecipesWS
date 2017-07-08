@@ -33,15 +33,12 @@ public class Recipe {
 
     private String instructions;
 
-    public String getDateCreated() {
-
-        SimpleDateFormat dt1 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-        return dt1.format(this.dateCreated);
+    public Date getDateCreated() {
+        return this.dateCreated;
     }
 
-    public String getLastUpdated() {
-        SimpleDateFormat dt1 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-        return dt1.format(this.lastUpdated);
+    public Date getLastUpdated() {
+        return this.lastUpdated;
     }
 
     public Cook getCook() {
@@ -55,6 +52,7 @@ public class Recipe {
     @ManyToOne
     private Cook cook;
 
+
     private Date dateCreated;
 
     @PrePersist
@@ -62,7 +60,6 @@ public class Recipe {
         this.dateCreated = new Date();
     }
 
-    @JsonIgnore
     private Date lastUpdated;
 
     @PreUpdate
@@ -74,8 +71,6 @@ public class Recipe {
         //JPA specific
     }
 
-    @OneToMany(mappedBy = "recipe")
-    private Set<Image> recipeImage;
 
     public Recipe(String title, int difficultyRating, int prepTime, double prepCost, String ingredients, String instructions) {
         this.title = title;

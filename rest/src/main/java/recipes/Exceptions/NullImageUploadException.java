@@ -1,4 +1,4 @@
-package recipes;
+package recipes.Exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  */
 @ResponseStatus(HttpStatus.NO_CONTENT)
 public class NullImageUploadException extends RuntimeException{
-    NullImageUploadException(){
+    public NullImageUploadException(){
         super("The uploaded image is empty :/");
     }
 }

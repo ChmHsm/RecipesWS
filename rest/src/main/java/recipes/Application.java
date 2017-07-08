@@ -19,13 +19,25 @@ public class Application extends SpringBootServletInitializer{
     }
 
     @Bean
-    CommandLineRunner init(final CookRepository cookRepository, final RecipeRepository recipeRepository){
+    CommandLineRunner init(final CookRepository cookRepository, final RecipeRepository recipeRepository,
+                           final ImageRepository imageRepository){
         return (evt) -> Arrays.asList("Houssam,Boualam,Safaa,Chaymae".split(","))
                 .forEach(
                         c ->{
                             Cook cook = cookRepository.save(new Cook(c, "password"));
-                            recipeRepository.save(new Recipe(c+"'s first Recipe", 5, 10, 50, c+"'s recipe's ingredients go here", c+"'s recipe's instructions go here", cook));
-                            recipeRepository.save(new Recipe(c+"'s second Recipe", 5, 10, 50, c+"'s recipe's ingredients go here", c+"'s recipe's instructions go here", cook));
+                            Recipe r1 = recipeRepository.save(new Recipe(c+"'s first Recipe", 5, 10, 50,
+                                    c+"'s recipe's ingredients go here", c+"'s recipe's instructions go here",
+                                    cook));
+
+                            imageRepository.save(new Image(RecipesRestController.IMAGE_STORAGE_LOCATION+r1.getId(),
+                                    RecipesRestController.IMAGE_STORAGE_LOCATION+r1.getId(), r1, true));
+
+                            Recipe r2 = recipeRepository.save(new Recipe(c+"'s second Recipe", 4, 20, 40,
+                                    c+"'s recipe's ingredients go here", c+"'s recipe's instructions go here",
+                                    cook));
+
+                            imageRepository.save(new Image(RecipesRestController.IMAGE_STORAGE_LOCATION+r2.getId(),
+                                    RecipesRestController.IMAGE_STORAGE_LOCATION+r2.getId(), r2, true));
                         }
                 );
     }
