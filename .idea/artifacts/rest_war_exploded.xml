@@ -58,6 +58,7 @@
           <element id="library" level="project" name="Maven: org.apache.tomcat.embed:tomcat-embed-el:8.5.11" />
           <element id="library" level="project" name="Maven: org.apache.tomcat.embed:tomcat-embed-websocket:8.5.11" />
           <element id="library" level="project" name="Maven: org.apache.tika:tika-core:1.14" />
+          <element id="library" level="project" name="Maven: net.imagej:ij:1.51h" />
           <element id="library" level="project" name="Maven: org.springframework.plugin:spring-plugin-core:1.2.0.RELEASE" />
           <element id="library" level="project" name="Maven: org.springframework:spring-beans:4.3.6.RELEASE" />
           <element id="library" level="project" name="Maven: org.springframework:spring-context:4.3.6.RELEASE" />

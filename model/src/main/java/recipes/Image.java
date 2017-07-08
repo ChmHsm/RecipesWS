@@ -28,6 +28,16 @@ public class Image {
 
     private boolean isMainPicture;
 
+    public String getExtension() {
+        return extension;
+    }
+
+    public void setExtension(String extension) {
+        this.extension = extension;
+    }
+
+    private String extension;
+
     public boolean isMainPicture() {
         return isMainPicture;
     }
