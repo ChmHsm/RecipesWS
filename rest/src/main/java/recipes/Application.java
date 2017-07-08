@@ -29,15 +29,19 @@ public class Application extends SpringBootServletInitializer{
                                     c+"'s recipe's ingredients go here", c+"'s recipe's instructions go here",
                                     cook));
 
-                            imageRepository.save(new Image(RecipesRestController.IMAGE_STORAGE_LOCATION+r1.getId(),
-                                    RecipesRestController.IMAGE_STORAGE_LOCATION+r1.getId(), r1, true));
+                            Image image1 = new Image(RecipesRestController.IMAGE_STORAGE_LOCATION+r1.getId(),
+                                    RecipesRestController.IMAGE_STORAGE_LOCATION+r1.getId(), r1, true);
+                            image1.setExtension(".jpg");
+                            imageRepository.save(image1);
 
                             Recipe r2 = recipeRepository.save(new Recipe(c+"'s second Recipe", 4, 20, 40,
                                     c+"'s recipe's ingredients go here", c+"'s recipe's instructions go here",
                                     cook));
 
-                            imageRepository.save(new Image(RecipesRestController.IMAGE_STORAGE_LOCATION+r2.getId(),
-                                    RecipesRestController.IMAGE_STORAGE_LOCATION+r2.getId(), r2, true));
+                            Image image2 = new Image(RecipesRestController.IMAGE_STORAGE_LOCATION+r2.getId(),
+                                    RecipesRestController.IMAGE_STORAGE_LOCATION+r2.getId(), r2, true);
+                            image2.setExtension(".jpg");
+                            imageRepository.save(image2);
                         }
                 );
     }
