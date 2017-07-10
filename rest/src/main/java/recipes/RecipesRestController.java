@@ -74,7 +74,7 @@ public class RecipesRestController {
                             .buildAndExpand(recipe.getId()).toUri();
                     return ResponseEntity.created(location).build();
                 })
-                .orElse(ResponseEntity.noContent().build());
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/{recipeId}")
@@ -143,7 +143,7 @@ public class RecipesRestController {
 
                 resizePicture(IMAGE_STORAGE_LOCATION + recipeImage.getId() + extension, THUMBNAIL_WIDTH, recipeImage.getId(), extension);
 
-                return ResponseEntity.ok().build();
+                return ResponseEntity.ok().body(recipeImage);
             } catch (Exception e) {
                 return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).build();
             }
@@ -257,5 +257,7 @@ public class RecipesRestController {
             return false;
         }
     }
+
+
 
 }

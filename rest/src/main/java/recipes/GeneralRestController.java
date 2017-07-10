@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.w3c.dom.html.HTMLTableCaptionElement;
 import recipes.Exceptions.CookNotFoundException;
 import recipes.Exceptions.RecipeNotFoundException;
 
@@ -23,11 +24,14 @@ public class GeneralRestController {
 
     private final CookRepository cookRepository;
     private final RecipeRepository recipeRepository;
+    private final ImageRepository imageRepository;
 
     @Autowired
-    public GeneralRestController(CookRepository cookRepository, RecipeRepository recipeRepository) {
+    public GeneralRestController(CookRepository cookRepository,
+                                 RecipeRepository recipeRepository, ImageRepository imageRepository) {
         this.cookRepository = cookRepository;
         this.recipeRepository = recipeRepository;
+        this.imageRepository = imageRepository;
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/recipes")
@@ -75,5 +79,20 @@ public class GeneralRestController {
 
     private void validateCook(String cookUsername) {
         this.cookRepository.findByUsernameIgnoreCase(cookUsername).orElseThrow(() -> new CookNotFoundException(cookUsername));
+    }
+
+    @RequestMapping(method = RequestMethod.POST, value="/recipes/{recipeId}/recipeMainImage")
+    ResponseEntity<?> addImage(@PathVariable Long recipeId, @RequestBody Image input) {
+        this.validateRecipe(recipeId);
+        Recipe recipe = recipeRepository.findOne(recipeId);
+
+        Image image = this.imageRepository.save(new Image(null, input.getOriginalName(), recipe, true));
+
+        return image != null ? ResponseEntity.ok().body(image) : ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).build();
+    }
+
+    private void validateRecipe(Long recipeId) {
+        Recipe recipe = this.recipeRepository.findOne(recipeId);
+        if (recipe == null) throw new RecipeNotFoundException();
     }
 }

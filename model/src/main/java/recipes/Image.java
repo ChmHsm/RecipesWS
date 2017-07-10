@@ -1,5 +1,7 @@
 package recipes;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -91,9 +93,11 @@ public class Image {
 
     }
 
+    @JsonIgnore
     @OneToOne
     private Cook cook;
 
+    @JsonIgnore
     @ManyToOne
     private Recipe recipe;
 
@@ -133,14 +137,11 @@ public class Image {
         this.lastUpdated = new Date();
     }
 
-    public String getDateCreated() {
-
-        SimpleDateFormat dt1 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-        return dt1.format(this.dateCreated);
+    public Date getDateCreated() {
+        return this.dateCreated;
     }
 
-    public String getLastUpdated() {
-        SimpleDateFormat dt1 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-        return dt1.format(this.lastUpdated);
+    public Date getLastUpdated() {
+        return this.lastUpdated;
     }
 }
