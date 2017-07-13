@@ -85,9 +85,10 @@ public class GeneralRestController {
     ResponseEntity<?> addImage(@PathVariable Long recipeId, @RequestBody Image input) {
         this.validateRecipe(recipeId);
         Recipe recipe = recipeRepository.findOne(recipeId);
-
-        Image image = this.imageRepository.save(new Image(null, input.getOriginalName(), recipe, true));
-
+        Image image = new Image(null, input.getOriginalName(), recipe, true)
+        image.setExtension(input.getExtension());
+        image = this.imageRepository.save(image);
+        
         return image != null ? ResponseEntity.ok().body(image) : ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).build();
     }
 
