@@ -29,8 +29,12 @@ public class Recipe {
 
     private double prepCost;
 
+    @Lob
+    @Column(length = 10000)
     private String ingredients;
 
+    @Lob
+    @Column(length = 10000)
     private String instructions;
 
     public Date getDateCreated() {
