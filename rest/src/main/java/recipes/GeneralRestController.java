@@ -9,10 +9,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.w3c.dom.html.HTMLTableCaptionElement;
 import recipes.Exceptions.CookNotFoundException;
+import recipes.Exceptions.ImageNotFoundException;
 import recipes.Exceptions.RecipeNotFoundException;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by Me on 24/05/2017.
@@ -81,19 +83,40 @@ public class GeneralRestController {
         this.cookRepository.findByUsernameIgnoreCase(cookUsername).orElseThrow(() -> new CookNotFoundException(cookUsername));
     }
 
-    @RequestMapping(method = RequestMethod.POST, value="/recipes/{recipeId}/recipeMainImage")
+    @RequestMapping(method = RequestMethod.POST, value = "/recipes/{recipeId}/recipeMainImage")
     ResponseEntity<?> addImage(@PathVariable Long recipeId, @RequestBody Image input) {
         this.validateRecipe(recipeId);
         Recipe recipe = recipeRepository.findOne(recipeId);
         Image image = new Image(null, input.getOriginalName(), recipe, true);
         image.setExtension(input.getExtension());
         image = this.imageRepository.save(image);
-        
+
         return image != null ? ResponseEntity.ok().body(image) : ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).build();
     }
 
     private void validateRecipe(Long recipeId) {
         Recipe recipe = this.recipeRepository.findOne(recipeId);
         if (recipe == null) throw new RecipeNotFoundException();
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/recipes/{recipeId}/recipeMainImage")
+    ResponseEntity<Image> getImageEntity(@PathVariable Long recipeId) {
+        validateRecipe(recipeId);
+
+        List<Image> images = (List) imageRepository.findByRecipe(recipeRepository.findOne(recipeId));
+        if(images != null){
+            if(images.size()>0){
+                for (Image image : images) {
+                    if (image.isMainPicture()) return ResponseEntity
+                            .ok()
+                            .body(image);
+                }
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity
+                .ok()
+                .body(images.get(0));
     }
 }
