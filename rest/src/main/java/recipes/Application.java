@@ -42,7 +42,13 @@ public class Application extends SpringBootServletInitializer{
                             imageRepository.save(image1);
 
                             Recipe r2 = recipeRepository.save(new Recipe(c+"'s second Recipe", 4, 20, 40,
-                                    c+"'s recipe's ingredients go here", c+"'s recipe's instructions go here",
+                                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit." +
+                                            "Vivamus volutpat sem id sem iaculis convallis." +
+                                            "Nullam malesuada urna nec lorem dignissim ornare." +
+                                            "Donec sit amet turpis maximus, lacinia erat nec, vehicula magna." +
+                                            "Mauris gravida elit sed tempor eleifend." +
+                                            "Etiam sodales purus non erat egestas imperdiet.",
+                                    "Pellentesque eu tincidunt nunc. Aliquam ut est porttitor, gravida velit nec, imperdiet nibh. Donec dictum, nunc non varius ultrices, nisi nunc tincidunt augue, a cursus dui lectus quis mauris. Aenean eleifend, neque vitae vestibulum posuere, leo massa venenatis felis, eget condimentum neque sem quis magna. Nulla auctor varius vehicula. Fusce tincidunt est vitae nisi malesuada, sit amet venenatis nunc volutpat. Maecenas sed dolor convallis leo consectetur pretium. Ut ut laoreet turpis, ut sagittis elit. Aliquam eu velit tortor. Phasellus venenatis euismod pharetra. Nullam ultricies ipsum scelerisque hendrerit commodo. Ut maximus libero a rutrum rutrum.",
                                     cook));
 
                             Image image2 = new Image(RecipesRestController.IMAGE_STORAGE_LOCATION+r2.getId(),
