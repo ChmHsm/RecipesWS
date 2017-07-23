@@ -119,4 +119,24 @@ public class GeneralRestController {
                 .ok()
                 .body(images.get(0));
     }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/images")
+    Collection<Image> getAllImages() {
+        return imageRepository.findAll();
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/images/20")
+    Collection<Image> getLatest20Images() {
+        return imageRepository.findTop20ByOrderByDateCreatedDesc();
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/images/50")
+    Collection<Image> getLatest50Images() {
+        return imageRepository.findTop50ByOrderByDateCreatedDesc();
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/images/100")
+    Collection<Image> getLatest100Images() {
+        return imageRepository.findTop100ByOrderByDateCreatedDesc();
+    }
 }
