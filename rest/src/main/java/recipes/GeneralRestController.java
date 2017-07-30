@@ -27,13 +27,16 @@ public class GeneralRestController {
     private final CookRepository cookRepository;
     private final RecipeRepository recipeRepository;
     private final ImageRepository imageRepository;
+    private final LikeRelationshipRepository likeRelationshipRepository;
 
     @Autowired
     public GeneralRestController(CookRepository cookRepository,
-                                 RecipeRepository recipeRepository, ImageRepository imageRepository) {
+                                 RecipeRepository recipeRepository, ImageRepository imageRepository,
+                                 LikeRelationshipRepository likeRelationshipRepository) {
         this.cookRepository = cookRepository;
         this.recipeRepository = recipeRepository;
         this.imageRepository = imageRepository;
+        this.likeRelationshipRepository = likeRelationshipRepository;
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/recipes")
@@ -104,8 +107,8 @@ public class GeneralRestController {
         validateRecipe(recipeId);
 
         List<Image> images = (List) imageRepository.findByRecipe(recipeRepository.findOne(recipeId));
-        if(images != null){
-            if(images.size()>0){
+        if (images != null) {
+            if (images.size() > 0) {
                 for (Image image : images) {
                     if (image.isMainPicture()) return ResponseEntity
                             .ok()
@@ -138,5 +141,43 @@ public class GeneralRestController {
     @RequestMapping(method = RequestMethod.GET, value = "/images/100")
     Collection<Image> getLatest100Images() {
         return imageRepository.findTop100ByOrderByDateCreatedDesc();
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/recipesLikes/{recipeId}")
+    ResponseEntity<?> getNumberOfLikesByRecipeId(@PathVariable Long recipeId) {
+        validateRecipe(recipeId);
+        List<LikeRelationship> likes = (List) likeRelationshipRepository.findByRecipe(recipeRepository.findOne(recipeId));
+        if (likes != null) {
+            if (likes.size() > 0) {
+                return ResponseEntity
+                        .ok()
+                        .body(likes.size());
+            }
+        }
+        return ResponseEntity.ok()
+                .body(0);
+    }
+
+    @RequestMapping(method = RequestMethod.POST, value = "/recipesLikes/{recipeId}/{cookUsername}")
+    ResponseEntity<?> addLikeToRecipe(@PathVariable Long recipeId,@PathVariable String cookUsername) {
+        validateRecipe(recipeId);
+        validateCook(cookUsername);
+        boolean alreadyLiked = false;
+        List<LikeRelationship> likesByRecipe = (List) likeRelationshipRepository.findByRecipe(recipeRepository.findOne(recipeId));
+        for(LikeRelationship likes : likesByRecipe){
+            if(likes.getCook().getUsername().equals(cookUsername)){
+                alreadyLiked = true;
+            }
+        }
+
+        Cook cook = cookRepository.findByUsernameIgnoreCase(cookUsername)
+                .orElseThrow(() -> new CookNotFoundException(cookUsername));
+
+        if(! alreadyLiked){
+            likeRelationshipRepository.save(new LikeRelationship(recipeRepository.findOne(recipeId),
+                    cook));
+        }
+
+        return ResponseEntity.ok().build();
     }
 }
