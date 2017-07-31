@@ -1,5 +1,7 @@
 package recipes;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -16,6 +18,7 @@ public class LikeRelationship {
     private Long id;
 
     @ManyToOne
+    @JsonIgnore
     private Recipe recipe;
 
     @ManyToOne

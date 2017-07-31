@@ -144,18 +144,12 @@ public class GeneralRestController {
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/recipesLikes/{recipeId}")
-    ResponseEntity<?> getNumberOfLikesByRecipeId(@PathVariable Long recipeId) {
+    ResponseEntity<?> getLikesByRecipeId(@PathVariable Long recipeId) {
         validateRecipe(recipeId);
         List<LikeRelationship> likes = (List) likeRelationshipRepository.findByRecipe(recipeRepository.findOne(recipeId));
-        if (likes != null) {
-            if (likes.size() > 0) {
-                return ResponseEntity
-                        .ok()
-                        .body(likes.size());
-            }
-        }
+
         return ResponseEntity.ok()
-                .body(0);
+                .body(likes);
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "/recipesLikes/{recipeId}/{cookUsername}")
