@@ -159,7 +159,7 @@ public class GeneralRestController {
         boolean alreadyLiked = false;
         List<LikeRelationship> likesByRecipe = (List) likeRelationshipRepository.findByRecipe(recipeRepository.findOne(recipeId));
         for(LikeRelationship likes : likesByRecipe){
-            if(likes.getCook().getUsername().equals(cookUsername)){
+            if(likes.getCook().getUsername().equalsIgnoreCase(cookUsername)){
                 alreadyLiked = true;
             }
         }
