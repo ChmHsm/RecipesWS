@@ -153,34 +153,33 @@ public class GeneralRestController {
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "/recipesLikes/{recipeId}/{cookUsername}")
-    ResponseEntity<?> addLikeToRecipe(@PathVariable Long recipeId,@PathVariable String cookUsername) {
+    ResponseEntity<?> addLikeToRecipe(@PathVariable Long recipeId, @PathVariable String cookUsername) {
         validateRecipe(recipeId);
         validateCook(cookUsername);
         boolean alreadyLiked = false;
         List<LikeRelationship> likesByRecipe = (List) likeRelationshipRepository.findByRecipe(recipeRepository.findOne(recipeId));
-        for(LikeRelationship likes : likesByRecipe){
-            if(likes.getCook().getUsername().equalsIgnoreCase(cookUsername)){
+        for (LikeRelationship likes : likesByRecipe) {
+            if (likes.getCook().getUsername().equalsIgnoreCase(cookUsername)) {
                 alreadyLiked = true;
+                return ResponseEntity.ok()
+                        .body(likes);
             }
         }
 
-        if(! alreadyLiked){
-            Cook cook = cookRepository.findByUsernameIgnoreCase(cookUsername)
-                    .orElseThrow(() -> new CookNotFoundException(cookUsername));
-            LikeRelationship like = likeRelationshipRepository.save(new LikeRelationship(recipeRepository.findOne(recipeId),
-                    cook));
-            return ResponseEntity.ok()
-                    .body(like);
-        }
+        Cook cook = cookRepository.findByUsernameIgnoreCase(cookUsername)
+                .orElseThrow(() -> new CookNotFoundException(cookUsername));
+        LikeRelationship like = likeRelationshipRepository.save(new LikeRelationship(recipeRepository.findOne(recipeId),
+                cook));
+        return ResponseEntity.ok()
+                .body(like);
 
-        return ResponseEntity.status(HttpStatus.ACCEPTED).build();
     }
 
     @RequestMapping(method = RequestMethod.DELETE, value = "/recipesLikes/{likeId}")
     ResponseEntity<?> deleteLikeToRecipe(@PathVariable Long likeId) {
 
         LikeRelationship like = likeRelationshipRepository.findOne(likeId);
-        if(like != null){
+        if (like != null) {
             likeRelationshipRepository.delete(likeId);
 
         }
