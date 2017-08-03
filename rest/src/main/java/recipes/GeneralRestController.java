@@ -164,14 +164,15 @@ public class GeneralRestController {
             }
         }
 
-        Cook cook = cookRepository.findByUsernameIgnoreCase(cookUsername)
-                .orElseThrow(() -> new CookNotFoundException(cookUsername));
-
         if(! alreadyLiked){
-            likeRelationshipRepository.save(new LikeRelationship(recipeRepository.findOne(recipeId),
+            Cook cook = cookRepository.findByUsernameIgnoreCase(cookUsername)
+                    .orElseThrow(() -> new CookNotFoundException(cookUsername));
+            LikeRelationship like = likeRelationshipRepository.save(new LikeRelationship(recipeRepository.findOne(recipeId),
                     cook));
+            return ResponseEntity.ok()
+                    .body(like);
         }
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.ACCEPTED).build();
     }
 }
