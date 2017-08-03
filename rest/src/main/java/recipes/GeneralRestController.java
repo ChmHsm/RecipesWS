@@ -175,4 +175,15 @@ public class GeneralRestController {
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).build();
     }
+
+    @RequestMapping(method = RequestMethod.DELETE, value = "/recipesLikes/{likeId}")
+    ResponseEntity<?> deleteLikeToRecipe(@PathVariable Long likeId) {
+
+        LikeRelationship like = likeRelationshipRepository.findOne(likeId);
+        if(like != null){
+            likeRelationshipRepository.delete(likeId);
+
+        }
+        return ResponseEntity.ok().build();
+    }
 }
