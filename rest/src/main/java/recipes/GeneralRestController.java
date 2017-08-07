@@ -156,11 +156,11 @@ public class GeneralRestController {
     ResponseEntity<?> addLikeToRecipe(@PathVariable Long recipeId, @PathVariable String cookUsername) {
         validateRecipe(recipeId);
         validateCook(cookUsername);
-        boolean alreadyLiked = false;
+
         List<LikeRelationship> likesByRecipe = (List) likeRelationshipRepository.findByRecipe(recipeRepository.findOne(recipeId));
         for (LikeRelationship likes : likesByRecipe) {
             if (likes.getCook().getUsername().equalsIgnoreCase(cookUsername)) {
-                alreadyLiked = true;
+
                 return ResponseEntity.ok()
                         .body(likes);
             }

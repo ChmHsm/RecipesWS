@@ -22,6 +22,9 @@ public class Application extends SpringBootServletInitializer{
     CommandLineRunner init(final CookRepository cookRepository, final RecipeRepository recipeRepository,
                            final ImageRepository imageRepository, final LikeRelationshipRepository likeRelationshipRepository){
         //TODO Delete all newly added images to AWS S3 bucket
+
+        cleanApplicationDatabase(cookRepository, recipeRepository, imageRepository, likeRelationshipRepository);
+
         return (evt) -> Arrays.asList("Houssam,Boualam,Safaa,Chaymae".split(","))
                 .forEach(
                         c ->{
@@ -60,5 +63,13 @@ public class Application extends SpringBootServletInitializer{
                             likeRelationshipRepository.save(new LikeRelationship(r2, cook));
                         }
                 );
+    }
+
+    private void cleanApplicationDatabase(final CookRepository cookRepository, final RecipeRepository recipeRepository,
+                               final ImageRepository imageRepository, final LikeRelationshipRepository likeRelationshipRepository){
+        imageRepository.deleteAll();
+        likeRelationshipRepository.deleteAll();
+        recipeRepository.deleteAll();
+        cookRepository.deleteAll();
     }
 }
