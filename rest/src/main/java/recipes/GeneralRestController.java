@@ -28,15 +28,18 @@ public class GeneralRestController {
     private final RecipeRepository recipeRepository;
     private final ImageRepository imageRepository;
     private final LikeRelationshipRepository likeRelationshipRepository;
+    private final FollowRelationshipRepository followRelationshipRepository;
 
     @Autowired
     public GeneralRestController(CookRepository cookRepository,
                                  RecipeRepository recipeRepository, ImageRepository imageRepository,
-                                 LikeRelationshipRepository likeRelationshipRepository) {
+                                 LikeRelationshipRepository likeRelationshipRepository,
+                                 FollowRelationshipRepository followRelationshipRepository) {
         this.cookRepository = cookRepository;
         this.recipeRepository = recipeRepository;
         this.imageRepository = imageRepository;
         this.likeRelationshipRepository = likeRelationshipRepository;
+        this.followRelationshipRepository = followRelationshipRepository;
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/recipes")
@@ -182,6 +185,47 @@ public class GeneralRestController {
         if (like != null) {
             likeRelationshipRepository.delete(likeId);
 
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    @RequestMapping(method = RequestMethod.POST, value = "/follows/{followerCook}/{followeeCook}")
+    ResponseEntity<?> addFollowToCook(@PathVariable String followerCook, @PathVariable String followeeCook) {
+        if(followerCook.equalsIgnoreCase(followeeCook)){
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        validateCook(followerCook);
+        validateCook(followeeCook);
+
+        Cook cook2 = cookRepository.findByUsernameIgnoreCase(followeeCook)
+                .orElseThrow(() -> new CookNotFoundException(followeeCook));
+
+        List<FollowRelationship> cookFollowers =
+                (List) followRelationshipRepository.findByFollower(cook2);
+
+        for (FollowRelationship follow : cookFollowers) {
+            if (follow.getFollower().getUsername().equalsIgnoreCase(followerCook)) {
+
+                return ResponseEntity.ok()
+                        .body(follow);
+            }
+        }
+
+        Cook cook1 = cookRepository.findByUsernameIgnoreCase(followerCook)
+                .orElseThrow(() -> new CookNotFoundException(followerCook));
+        FollowRelationship followRelationship = followRelationshipRepository.save(new FollowRelationship(cook1, cook2));
+        return ResponseEntity.ok()
+                .body(followRelationship);
+
+    }
+
+    @RequestMapping(method = RequestMethod.DELETE, value = "/follows/{followId}")
+    ResponseEntity<?> unfollowCook(@PathVariable Long followId) {
+
+        FollowRelationship follow = followRelationshipRepository.findOne(followId);
+
+        if (follow != null) {
+            followRelationshipRepository.delete(follow);
         }
         return ResponseEntity.ok().build();
     }
