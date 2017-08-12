@@ -229,4 +229,30 @@ public class GeneralRestController {
         }
         return ResponseEntity.ok().build();
     }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/{cookUsername}/followers")
+    ResponseEntity<?> getCookFollowers(@PathVariable String cookUsername){
+        validateCook(cookUsername);
+
+        Cook cook = cookRepository.findByUsernameIgnoreCase(cookUsername)
+                .orElseThrow(() -> new CookNotFoundException(cookUsername));
+
+        List<FollowRelationship> followers = (List) followRelationshipRepository.findByFollowee(cook);
+
+        return ResponseEntity.ok()
+                .body(followers);
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/{cookUsername}/followees")
+    ResponseEntity<?> getCookFollowees(@PathVariable String cookUsername){
+        validateCook(cookUsername);
+
+        Cook cook = cookRepository.findByUsernameIgnoreCase(cookUsername)
+                .orElseThrow(() -> new CookNotFoundException(cookUsername));
+
+        List<FollowRelationship> followers = (List) followRelationshipRepository.findByFollower(cook);
+
+        return ResponseEntity.ok()
+                .body(followers);
+    }
 }
