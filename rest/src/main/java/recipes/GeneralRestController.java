@@ -1,6 +1,7 @@
 package recipes;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.Link;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -8,13 +9,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.w3c.dom.html.HTMLTableCaptionElement;
-import recipes.Exceptions.CookNotFoundException;
 import recipes.Exceptions.ImageNotFoundException;
 import recipes.Exceptions.RecipeNotFoundException;
+import recipes.security.UserNotFoundException;
+import recipes.security.resourceEntities.CookResource;
+import recipes.security.resourceEntities.ImageResource;
+import recipes.security.resourceEntities.*;
 
 import java.net.URI;
+import java.security.Principal;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by Me on 24/05/2017.
@@ -80,24 +86,38 @@ public class GeneralRestController {
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "cook/{username}")
-    Cook getCook(@PathVariable String username) {
-        return this.cookRepository.findByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new CookNotFoundException(username));
+    public CookResource getCook(Principal principal, @PathVariable String username) {
+        validateCook(principal);
+
+        return new CookResource(
+                this.cookRepository.findByUsernameIgnoreCase(username)
+                        .orElseThrow(() -> new UserNotFoundException(username)));
+
     }
 
-    private void validateCook(String cookUsername) {
-        this.cookRepository.findByUsernameIgnoreCase(cookUsername).orElseThrow(() -> new CookNotFoundException(cookUsername));
+    private void validateCook(Principal principal) {
+        String username = principal.getName();
+        this.cookRepository
+                .findByUsernameIgnoreCase(username)
+                .orElseThrow(
+                        () -> new UserNotFoundException(username));
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "/recipes/{recipeId}/recipeMainImage")
-    ResponseEntity<?> addImage(@PathVariable Long recipeId, @RequestBody Image input) {
+    ResponseEntity<?> addImage(Principal principal, @PathVariable Long recipeId, @RequestBody Image input) {
+        validateCook(principal);
         this.validateRecipe(recipeId);
         Recipe recipe = recipeRepository.findOne(recipeId);
         Image image = new Image(null, input.getOriginalName(), recipe, true);
         image.setExtension(input.getExtension());
         image = this.imageRepository.save(image);
 
-        return image != null ? ResponseEntity.ok().body(image) : ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).build();
+        Link forOneImage = new ImageResource(image).getLink(Link.REL_SELF);
+
+        return ResponseEntity
+                .created(URI
+                        .create(forOneImage.getHref()))
+                .build();
     }
 
     private void validateRecipe(Long recipeId) {
@@ -106,7 +126,8 @@ public class GeneralRestController {
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/recipes/{recipeId}/recipeMainImage")
-    ResponseEntity<Image> getImageEntity(@PathVariable Long recipeId) {
+    public ResponseEntity<Image> getImageEntity(Principal principal, @PathVariable Long recipeId) {
+        validateCook(principal);
         validateRecipe(recipeId);
 
         List<Image> images = (List) imageRepository.findByRecipe(recipeRepository.findOne(recipeId));
@@ -156,9 +177,9 @@ public class GeneralRestController {
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "/recipesLikes/{recipeId}/{cookUsername}")
-    ResponseEntity<?> addLikeToRecipe(@PathVariable Long recipeId, @PathVariable String cookUsername) {
+    ResponseEntity<?> addLikeToRecipe(Principal principal, @PathVariable Long recipeId, @PathVariable String cookUsername) {
         validateRecipe(recipeId);
-        validateCook(cookUsername);
+        validateCook(principal);
 
         List<LikeRelationship> likesByRecipe = (List) likeRelationshipRepository.findByRecipe(recipeRepository.findOne(recipeId));
         for (LikeRelationship likes : likesByRecipe) {
@@ -170,7 +191,7 @@ public class GeneralRestController {
         }
 
         Cook cook = cookRepository.findByUsernameIgnoreCase(cookUsername)
-                .orElseThrow(() -> new CookNotFoundException(cookUsername));
+                .orElseThrow(() -> new UserNotFoundException(cookUsername));
         LikeRelationship like = likeRelationshipRepository.save(new LikeRelationship(recipeRepository.findOne(recipeId),
                 cook));
         return ResponseEntity.ok()
@@ -179,8 +200,8 @@ public class GeneralRestController {
     }
 
     @RequestMapping(method = RequestMethod.DELETE, value = "/recipesLikes/{likeId}")
-    ResponseEntity<?> deleteLikeToRecipe(@PathVariable Long likeId) {
-
+    ResponseEntity<?> deleteLikeToRecipe(Principal principal, @PathVariable Long likeId) {
+        validateCook(principal);
         LikeRelationship like = likeRelationshipRepository.findOne(likeId);
         if (like != null) {
             likeRelationshipRepository.delete(likeId);
@@ -190,15 +211,16 @@ public class GeneralRestController {
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "/follows/{followerCook}/{followeeCook}")
-    ResponseEntity<?> addFollowToCook(@PathVariable String followerCook, @PathVariable String followeeCook) {
+    ResponseEntity<?> addFollowToCook(Principal principal, @PathVariable String followerCook, @PathVariable String followeeCook) {
+
+        validateCook(principal);
+
         if(followerCook.equalsIgnoreCase(followeeCook)){
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
-        validateCook(followerCook);
-        validateCook(followeeCook);
 
         Cook cook2 = cookRepository.findByUsernameIgnoreCase(followeeCook)
-                .orElseThrow(() -> new CookNotFoundException(followeeCook));
+                .orElseThrow(() -> new UserNotFoundException(followeeCook));
 
         List<FollowRelationship> cookFollowers =
                 (List) followRelationshipRepository.findByFollower(cook2);
@@ -212,7 +234,7 @@ public class GeneralRestController {
         }
 
         Cook cook1 = cookRepository.findByUsernameIgnoreCase(followerCook)
-                .orElseThrow(() -> new CookNotFoundException(followerCook));
+                .orElseThrow(() -> new UserNotFoundException(followerCook));
         FollowRelationship followRelationship = followRelationshipRepository.save(new FollowRelationship(cook1, cook2));
         return ResponseEntity.ok()
                 .body(followRelationship);
@@ -220,7 +242,9 @@ public class GeneralRestController {
     }
 
     @RequestMapping(method = RequestMethod.DELETE, value = "/follows/{followId}")
-    ResponseEntity<?> unfollowCook(@PathVariable Long followId) {
+    ResponseEntity<?> unfollowCook(Principal principal, @PathVariable Long followId) {
+
+        validateCook(principal);
 
         FollowRelationship follow = followRelationshipRepository.findOne(followId);
 
@@ -231,11 +255,11 @@ public class GeneralRestController {
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/{cookUsername}/followers")
-    ResponseEntity<?> getCookFollowers(@PathVariable String cookUsername){
-        validateCook(cookUsername);
+    ResponseEntity<?> getCookFollowers(Principal principal, @PathVariable String cookUsername){
+        validateCook(principal);
 
         Cook cook = cookRepository.findByUsernameIgnoreCase(cookUsername)
-                .orElseThrow(() -> new CookNotFoundException(cookUsername));
+                .orElseThrow(() -> new UserNotFoundException(cookUsername));
 
         List<FollowRelationship> followers = (List) followRelationshipRepository.findByFollowee(cook);
 
@@ -244,11 +268,11 @@ public class GeneralRestController {
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/{cookUsername}/followees")
-    ResponseEntity<?> getCookFollowees(@PathVariable String cookUsername){
-        validateCook(cookUsername);
+    ResponseEntity<?> getCookFollowees(Principal principal, @PathVariable String cookUsername){
+        validateCook(principal);
 
         Cook cook = cookRepository.findByUsernameIgnoreCase(cookUsername)
-                .orElseThrow(() -> new CookNotFoundException(cookUsername));
+                .orElseThrow(() -> new UserNotFoundException(cookUsername));
 
         List<FollowRelationship> followers = (List) followRelationshipRepository.findByFollower(cook);
 

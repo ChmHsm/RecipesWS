@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,6 +22,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import recipes.Exceptions.CookNotFoundException;
 import recipes.Exceptions.NullImageUploadException;
 import recipes.Exceptions.RecipeNotFoundException;
+import recipes.security.resourceEntities.RecipeResource;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -29,13 +32,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidParameterException;
+import java.security.Principal;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Created by Me on 23/05/2017.
  */
 @RestController
-@RequestMapping("/{cookUsername}/recipes")
+@RequestMapping("/recipes")
 public class RecipesRestController {
 
     private final CookRepository cookRepository;
@@ -56,40 +63,57 @@ public class RecipesRestController {
     }
 
     @RequestMapping(method = RequestMethod.GET)
-    Collection<Recipe> getCookRecipes(@PathVariable String cookUsername) {
-        validateCook(cookUsername);
-        return recipeRepository.findByCookUsernameIgnoreCaseOrderByDateCreatedDesc(cookUsername);
+    Resources<RecipeResource> getCookRecipes(Principal principal) {
+        validateCook(principal);
+
+        List<RecipeResource> recipeResourceList = recipeRepository
+                .findByCookUsernameIgnoreCaseOrderByDateCreatedDesc(
+                        principal.getName()).stream()
+                .map(RecipeResource::new)
+                .collect(Collectors.toList());
+
+        return new Resources<>(recipeResourceList);
+
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    ResponseEntity<?> addRecipe(@PathVariable String cookUsername, @RequestBody Recipe input) {
-        this.validateCook(cookUsername);
+    ResponseEntity<?> addRecipe(Principal principal, @RequestBody Recipe input) {
+        validateCook(principal);
 
-        return cookRepository.findByUsernameIgnoreCase(cookUsername)
+        return cookRepository.findByUsernameIgnoreCase(principal.getName())
                 .map(cook -> {
                     Recipe recipe = this.recipeRepository.save(new Recipe(input.getTitle(), input.getDifficultyRating(),
                             input.getPrepTime(), input.getPrepCost(), input.getIngredients(), input.getInstructions(), cook));
-                    URI location = ServletUriComponentsBuilder
-                            .fromCurrentRequest().path("/{id}")
-                            .buildAndExpand(recipe.getId()).toUri();
-                    return ResponseEntity.created(location).build();
+
+                    Link forOneRecipe = new RecipeResource(recipe).getLink(Link.REL_SELF);
+
+                    return ResponseEntity.created(URI
+                            .create(forOneRecipe.getHref()))
+                            .build();
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/{recipeId}")
-    Recipe readRecipe(@PathVariable String cookUsername, @PathVariable Long recipeId) {
-        this.validateCook(cookUsername);
-        return this.recipeRepository.findByCookUsernameIgnoreCase(cookUsername).stream()
-                .filter(recipe -> recipe.getId() == recipeId)
+    public RecipeResource readRecipe(Principal principal, @PathVariable Long recipeId) {
+        validateCook(principal);
+        return new RecipeResource(
+                this.recipeRepository
+                        .findByCookUsernameIgnoreCase(
+                                principal.getName())
+                        .stream()
+                .filter(recipe -> Objects.equals(recipe.getId(), recipeId))
                 .findFirst()
-                .orElseThrow(() -> new RecipeNotFoundException());
+                .orElseThrow(RecipeNotFoundException::new));
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "/{recipeId}")
-    ResponseEntity<?> updateRecipe(@PathVariable String cookUsername, @PathVariable Long recipeId, @RequestBody Recipe input) {
-        this.validateRecipe(recipeId);
+    ResponseEntity<?> updateRecipe(Principal principal, @PathVariable Long recipeId, @RequestBody Recipe input) {
+        validateCook(principal);
+        validateRecipe(recipeId);
+        //Recipe retrieval
         Recipe recipe = this.recipeRepository.findOne(recipeId);
+        //RecipeUpdating
         recipe.setTitle(input.getTitle());
         recipe.setDifficultyRating(input.getDifficultyRating());
         recipe.setPrepTime(input.getPrepTime());
@@ -97,19 +121,25 @@ public class RecipesRestController {
         recipe.setIngredients(input.getIngredients());
         recipe.setInstructions(input.getInstructions());
 
-        return cookRepository.findByUsernameIgnoreCase(cookUsername)
+        return cookRepository.findByUsernameIgnoreCase(principal.getName())
                 .map(cook -> {
-                    this.recipeRepository.save(recipe);
-                    URI location = ServletUriComponentsBuilder
-                            .fromCurrentRequest()
-                            .buildAndExpand().toUri();
-                    return ResponseEntity.created(location).build();
+                    Recipe updateRecipe = this.recipeRepository.save(recipe);
+                    Link forOneRecipe = new RecipeResource(updateRecipe).getLink(Link.REL_SELF);
+
+                    return ResponseEntity
+                            .created(URI
+                                    .create(forOneRecipe.getHref()))
+                            .build();
                 })
-                .orElse(ResponseEntity.noContent().build());
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    private void validateCook(String cookUsername) {
-        this.cookRepository.findByUsernameIgnoreCase(cookUsername).orElseThrow(() -> new CookNotFoundException(cookUsername));
+    private void validateCook(Principal principal) {
+        String username = principal.getName();
+        this.cookRepository
+                .findByUsernameIgnoreCase(username)
+                .orElseThrow(
+                        () -> new CookNotFoundException(username));
     }
 
     private void validateRecipe(Long recipeId) {
@@ -118,7 +148,9 @@ public class RecipesRestController {
     }
 
     @RequestMapping(value = "/{recipeId}/recipeMainImage/{isMainPicture}", method = RequestMethod.POST)
-    ResponseEntity<?> handleRecipeImageUpload(@RequestParam("file") MultipartFile file, @PathVariable Long recipeId, @PathVariable Boolean isMainPicture) {
+    ResponseEntity<?> handleRecipeImageUpload(Principal principal, @RequestParam("file") MultipartFile file,
+                                              @PathVariable Long recipeId, @PathVariable Boolean isMainPicture) {
+        validateCook(principal);
         validateRecipe(recipeId);
         validateImageFile(file);
 
