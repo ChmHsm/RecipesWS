@@ -17,7 +17,7 @@ import recipes.CookRepository;
 
 // Cook user authentication
 @Configuration
-class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
+public class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
     @Autowired
     CookRepository cookRepository;
@@ -32,7 +32,7 @@ class WebSecurityConfiguration extends GlobalAuthenticationConfigurerAdapter {
         return (username) -> cookRepository
                 .findByUsernameIgnoreCase(username)
                 .map(a -> new User(a.getUsername(), a.getPassword(), true, true, true, true,
-                        AuthorityUtils.createAuthorityList("USER", "write")))
+                        AuthorityUtils.createAuthorityList("ROLE_USER", "write")))
                 .orElseThrow(
                         () -> new UsernameNotFoundException("could not find the user '"
                                 + username + "'"));

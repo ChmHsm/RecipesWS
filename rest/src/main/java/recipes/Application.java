@@ -21,7 +21,6 @@ import java.util.Arrays;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
 
 
-//
 // curl -X POST -vu android-bookmarks:123456 http://localhost:8080/oauth/token -H
 // "Accept: application/json" -d "password=password&username=jlong&grant_type=password&scope=write
 // &client_secret=123456&client_id=android-bookmarks"
@@ -78,7 +77,7 @@ public class Application extends SpringBootServletInitializer{
                            final ImageRepository imageRepository, final LikeRelationshipRepository likeRelationshipRepository){
         //TODO Delete all newly added images to AWS S3 bucket
 
-        cleanApplicationDatabase(cookRepository, recipeRepository, imageRepository, likeRelationshipRepository);
+        //cleanApplicationDatabase(cookRepository, recipeRepository, imageRepository, likeRelationshipRepository);
 
         return (evt) -> Arrays.asList("Houssam,Boualam,Safaa,Chaymae".split(","))
                 .forEach(
